@@ -1,13 +1,14 @@
 (ns main
-  (:require  [clojure.set :as s]) 
+  (:require [clojure.set :as s])
   (:require [java-time.api :as t])
   (:require [clojure.string :as str])
+  (:require [ysera.test :refer [is= is]])
   )
-  
+
 (defn create-deck []
   (into [] (for [s ['C 'D 'H 'S]
-        n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
-    [s n])))
+                 n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
+             [s n])))
 
 (def state (atom {}))
 
@@ -25,19 +26,18 @@
   (swap! state assoc :deck (shuffle (:deck @state))))
 
 (defn deal! [state]
-  (let [missing (- 7 (count (:hand @state)))] 
-    (swap! state assoc :hand (concat (:hand @state)(take missing (:deck @state))))
+  (let [missing (- 7 (count (:hand @state)))]
+    (swap! state assoc :hand (into [] (concat (:hand @state) (take missing (:deck @state)))))
     (swap! state assoc :deck (subvec (:deck @state) missing))
-  ))
+    ))
 
 (defn play []
   ;remove selected cards from hand, can't be nothing, then deal.
   (println (:hand @state))
   (let [user-input (read-line)
         str-vect (str/split user-input #" ")]
-    
     (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
-        ))
+    ))
 
 (comment
   (create-initial-state)
@@ -46,13 +46,12 @@
   (init-state! (create-deck) [['P 1] ['P 2]] [])
   (print @state)
   (deal! state)
-  (print @state) 
+  (print @state)
   (play)
   (shuffle-deck! state)
+
+  (swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
   )
 
 
-(swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
-
-(init-state!)
 
