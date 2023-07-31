@@ -33,12 +33,22 @@
     (swap! state assoc :deck (subvec (:deck @state) missing))
     ))
 
-(defn play []
-  ;remove selected cards from hand, can't be nothing, then deal.
+(defn play [] 
   (println (:hand @state))
   (let [user-input (read-line)
         str-vect (str/split user-input #" ")]
+    (println (user-input))
     (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
+    ))
+
+(defn discard! [] ;;Not working yet;;
+  (println (:hand @state))
+  (let [user-input (read-line)
+        str-vect (str/split user-input #" ")
+        i (- (Integer/parseInt (first str-vect)) 1)]
+    (swap! state assoc :hand (s/difference (set (:hand @state)) (set(subvec (:hand @state) i (inc i)))))
+    (println (user-input))
+    (println (:hand @state))
     ))
 
 (comment
@@ -51,7 +61,7 @@
   (print @state)
   (play)
   (shuffle-deck! state)
-
+  (discard!)
   (swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
   )
 
