@@ -8,7 +8,7 @@
 (defn create-deck []
   (into [] (for [s ['C 'D 'H 'S]
                  n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
-             [s n])))
+             (str s n))))
 
 (defonce handsize 8)
 
@@ -33,7 +33,8 @@
     (swap! state assoc :deck (subvec (:deck @state) missing))
     ))
 
-(defn play [] 
+(defn play []
+  ;;ToDo Make it possible to play more than one card :-)
   (println (:hand @state))
   (let [user-input (read-line)
         str-vect (str/split user-input #" ")]
@@ -50,18 +51,31 @@
     (println (:hand @state))
     ))
 
+(first '(1 3))
 
 (comment
   (create-initial-state)
+  (type (second "H3"))
 
   ;;ToDo Move to test of deal!
-  (init-state! (create-deck) [['P 1] ['P 2]] [])
+  (init-state! (create-deck) ["P1" "P2"] [])
+  (init-state! (create-deck) [] [])
   (print @state)
   (deal! state)
   (print @state)
   (play)
   (shuffle-deck! state)
+
+  ;;Discard lab
+  (map-indexed vector (:hand @state))
+  (filter odd? [0 1 2 3 4 5 6 7])
+  (remove odd? [0 1 2 3 4 5 6 7])
+
+  (remove (fn [[k v]]
+            (some #(= k %) [1 3 5]))
+                  (map-indexed vector (:hand @state)))
   (discard!)
+  (some #(= 4 %) [1 3 5])
   (swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
   )
 
