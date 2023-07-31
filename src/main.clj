@@ -46,10 +46,10 @@
   (let [user-input (read-line)
         str-vect (str/split user-input #" ")
         i (- (Integer/parseInt (first str-vect)) 1)]
-    (swap! state assoc :hand (s/difference (set (:hand @state)) (set(subvec (:hand @state) i (inc i)))))
-    (println (user-input))
+    (swap! state assoc :hand (concat (subvec (:hand @state) 0 i) (subvec (:hand @state) (int i))))
     (println (:hand @state))
     ))
+
 
 (comment
   (create-initial-state)
