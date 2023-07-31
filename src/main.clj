@@ -10,6 +10,8 @@
                  n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
              [s n])))
 
+(defonce handsize 8)
+
 (def state (atom {}))
 
 (defn init-state! [deck hand choices]
@@ -26,7 +28,7 @@
   (swap! state assoc :deck (shuffle (:deck @state))))
 
 (defn deal! [state]
-  (let [missing (- 7 (count (:hand @state)))]
+  (let [missing (- handsize (count (:hand @state)))]
     (swap! state assoc :hand (into [] (concat (:hand @state) (take missing (:deck @state)))))
     (swap! state assoc :deck (subvec (:deck @state) missing))
     ))
