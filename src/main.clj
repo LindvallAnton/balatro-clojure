@@ -37,7 +37,7 @@
   ;;ToDo Make it possible to play more than one card :-)
   (println (:hand @state))
   (let [user-input (read-line)
-        str-vect (str/split user-input #" ")]
+        str-vect (str/split user-input #"\s+")]
     (println (user-input))
     (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
     ))
@@ -45,7 +45,7 @@
 (defn discard! [] ;;Not working yet;;
   (println (:hand @state))
   (let [user-input (read-line)
-        str-vect (str/split user-input #" ")
+        str-vect (str/split user-input #"\s+")
         i (- (Integer/parseInt (first str-vect)) 1)]
     (swap! state assoc :hand (concat (subvec (:hand @state) 0 i) (subvec (:hand @state) (int i))))
     (println (:hand @state))
