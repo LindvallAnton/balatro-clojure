@@ -38,11 +38,10 @@
     ))
 
 (defn play []
-  ;;ToDo Make it possible to play more than one card :-)
+  ;;ToDo Make it possible to play more than one card :-) 
   (println (:hand @state))
   (let [user-input (read-line)
         str-vect (str/split user-input #"\s+")]
-    (println (user-input))
     (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
     ))
 
