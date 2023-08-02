@@ -20,6 +20,10 @@
   (swap! state assoc :choices choices)
   )
 
+(defn important []
+  (println "Älskar dig Pappa")
+  )
+
 (defn create-initial-state []
   (init-state! (shuffle (create-deck)) [] [])
   )
@@ -54,6 +58,8 @@
 (first '(1 3))
 
 (comment
+  (important)
+
   (create-initial-state)
   (type (second "H3"))
 
