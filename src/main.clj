@@ -41,16 +41,26 @@
   ;;ToDo Make it possible to play more than one card :-) 
   (println (:hand @state))
   (let [user-input (read-line)
-        str-vect (str/split user-input #"\s+")]
-    (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
-    ))
+        str-vect (str/split user-input #"\s+")
+        ;;made-play []
+        ]
+    (print user-input)
+    (print (str str-vect))
+    (for [i [str-vect]
+          h (:hand @state)]
+      (some #(when (= first (map-indexed vector (h))) %) '(Integer/parseInt (i)))
+      ;;(when (identical? (first (map-indexed vector h)) (Integer/parseInt (i)))
+        ;(concat [made-play]
+         ;       (nth (:hand @state) (- (Integer/parseInt (i) 1))))))
+    ;(println (str made-play)
+      )))
 
 (defn discard! [] ;;Not working yet;;
   (println (:hand @state))
   (let [user-input (read-line)
         str-vect (str/split user-input #"\s+")
         i (- (Integer/parseInt (first str-vect)) 1)]
-    (swap! state assoc :hand (concat (subvec (:hand @state) 0 i) (subvec (:hand @state) (int i))))
+    (swap! state assoc :hand (concat (subvec (:hand @state) 0 i) (subvec (:hand @state) (inc i))))
     (println (:hand @state))
     ))
 
@@ -71,7 +81,8 @@
   (play)
   (shuffle-deck! state)
 
-  ;;Discard lab
+  ;;Discard lab(
+  (map-indexed vector (:deck @state))
   (map-indexed vector (:hand @state))
   (filter odd? [0 1 2 3 4 5 6 7])
   (remove odd? [0 1 2 3 4 5 6 7])
