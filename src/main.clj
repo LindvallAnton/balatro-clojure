@@ -38,39 +38,28 @@
     ))
 
 (defn play []
-  ;;ToDo Make it possible to play more than one card :-) 
+  ;;ToDo Make it possible to play more than one card :-)
   (println (:hand @state))
   (let [user-input (read-line)
-        str-vect (str/split user-input #"\s+")
-        ;;made-play []
-        ]
-    (print user-input)
-    (print (str str-vect))
-    (for [i [str-vect]
-          h (:hand @state)]
-      (some #(when (= first (map-indexed vector (h))) %) '(Integer/parseInt (i)))
-      ;;(when (identical? (first (map-indexed vector h)) (Integer/parseInt (i)))
-        ;(concat [made-play]
-         ;       (nth (:hand @state) (- (Integer/parseInt (i) 1))))))
-    ;(println (str made-play)
-      )))
-
-(defn discard! [] ;;Not working yet;;
-  (println (:hand @state))
-  (let [user-input (read-line)
-        str-vect (str/split user-input #"\s+")
-        i (- (Integer/parseInt (first str-vect)) 1)]
-    (swap! state assoc :hand (concat (subvec (:hand @state) 0 i) (subvec (:hand @state) (inc i))))
-    (println (:hand @state))
+        str-vect (str/split user-input #"\s+")]
+    (println (user-input))
+    (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
     ))
 
-(first '(1 3))
+(defn discard! [state cards-to-discard]
+  ;;discards the cards in coll cards-to-discard from :hand
+  (swap! state assoc :hand
+         (->> (:hand @state)
+              (map-indexed vector)
+              (remove (fn [[k v]]
+                        (some #(= (+ k 1) %) cards-to-discard)))
+              (reduce (fn [a v]
+                        (conj a (second v)))
+                      []))
+         ))
 
 (comment
-  (important)
-
   (create-initial-state)
-  (type (second "H3"))
 
   ;;ToDo Move to test of deal!
   (init-state! (create-deck) ["P1" "P2"] [])
@@ -81,17 +70,23 @@
   (play)
   (shuffle-deck! state)
 
-  ;;Discard lab(
-  (map-indexed vector (:deck @state))
+  ;;Discard lab
   (map-indexed vector (:hand @state))
   (filter odd? [0 1 2 3 4 5 6 7])
   (remove odd? [0 1 2 3 4 5 6 7])
 
+  ;;Remove
   (remove (fn [[k v]]
             (some #(= k %) [1 3 5]))
-                  (map-indexed vector (:hand @state)))
-  (discard!)
-  (some #(= 4 %) [1 3 5])
+          (map-indexed vector (:hand @state)))
+
+  (reduce (fn [a v]
+            (conj a (first v)))
+          []
+          [[0 10] [1 11] [2 12]]
+          )
+
+  (discard! state [3 4 5])
   (swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
   )
 
