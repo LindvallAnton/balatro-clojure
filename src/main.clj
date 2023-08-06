@@ -1,6 +1,6 @@
 (ns main
   (:require [clojure.set :as s])
-  (:require [java-time.api :as t])
+  ;;  (:require [java-time.api :as t])
   (:require [clojure.string :as str])
   (:require [ysera.test :refer [is= is]])
   )
@@ -10,7 +10,7 @@
                  n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
              (str s n))))
 
-(defonce handsize 8)
+(defonce hand-size 8)
 
 (def state (atom {}))
 
@@ -18,76 +18,95 @@
   (swap! state assoc :deck deck)
   (swap! state assoc :hand hand)
   (swap! state assoc :choices choices)
+  (swap! state assoc :show_menu true)
   )
 
 (defn important []
   (println "Älskar dig Pappa")
   )
 
-(defn create-initial-state []
+(defn create-initial-state! []
   (init-state! (shuffle (create-deck)) [] [])
   )
 
 (defn shuffle-deck! [state]
   (swap! state assoc :deck (shuffle (:deck @state))))
 
-(defn deal! [state]
-  (let [missing (- handsize (count (:hand @state)))]
-    (swap! state assoc :hand (into [] (concat (:hand @state) (take missing (:deck @state)))))
-    (swap! state assoc :deck (subvec (:deck @state) missing))
-    ))
+(defn toggle-menu! []
+  (swap! state assoc :show_menu (if (:show_menu @state)
+                                  false
+                                  true)))
 
-(defn play []
-  ;;ToDo Make it possible to play more than one card :-)
-  (println (:hand @state))
-  (let [user-input (read-line)
-        str-vect (str/split user-input #"\s+")]
-    (println (user-input))
-    (print (nth (:hand @state) (- (Integer/parseInt (first str-vect)) 1)))
-    ))
+(declare discard!)
+(defn deal! [state]
+  (let [missing (- hand-size (count (:hand @state)))]
+    (swap! state assoc :hand (into [] (sort (concat (:hand @state) (take missing (:deck @state))))))
+    (swap! state assoc :deck (subvec (:deck @state) missing))))
+
+(defn play! [state cards-to-play]
+  (let [chosen-cards (->> (:hand @state)
+                          (map-indexed vector)
+                          (filter (fn [[k _]]
+                                    (some #(= (+ k 1) %) cards-to-play)))
+                          (reduce (fn [a v]
+                                    (conj a (second v)))
+                                  [])
+                          )]
+    (println "You played: " chosen-cards)
+    ;;ToDo count score
+    (discard! state cards-to-play)))
+
+(defn select-cards [action]
+  ;Returns a vector with the cards the user wants to do "action" with
+  (print "Cards to " action ": ")
+  (flush)
+  (reduce (fn [a v]
+            (conj a (Integer/parseInt v)))
+          []
+          (str/split (read-line) #"\s+")))
+
+(defn discard
+  ;;discards the cards in cards-to-discard from hand
+  {:test (fn []
+           (is= (discard ["C1" "C2" "C3" "C4" "C5"] [1 3 5]) ["C2" "C4"])
+           (is= (discard ["C1" "C2" "C3" "C4" "C5"] [1 3 5 6]) ["C2" "C4"])
+           (is= (discard ["C1" "C2" "C3"] []) ["C1" "C2" "C3"])
+           (is= (discard [] [1 3 5]) []))}
+  [hand cards-to-discard]
+  (->> hand
+       (map-indexed vector)
+       (remove (fn [[k _]]
+                 (some #(= (+ k 1) %) cards-to-discard)))
+       (reduce (fn [a v]
+                 (conj a (second v)))
+               [])))
 
 (defn discard! [state cards-to-discard]
-  ;;discards the cards in coll cards-to-discard from :hand
-  (swap! state assoc :hand
-         (->> (:hand @state)
-              (map-indexed vector)
-              (remove (fn [[k v]]
-                        (some #(= (+ k 1) %) cards-to-discard)))
-              (reduce (fn [a v]
-                        (conj a (second v)))
-                      []))
-         ))
+  (swap! state assoc :hand (discard (:hand @state) cards-to-discard)))
+
+(defn -main [& args]
+  (println "Let's play! \u2660")
+  (create-initial-state!)
+  (deal! state)
+  (loop []
+    (println "Hand:" (:hand @state))
+    (if (:show_menu @state)
+      (println "q - quit\np - play\nd - discard\nt - toggle menu"))
+    (case (read-line)
+      "q" nil
+      "p" (do (play! state (select-cards "play"))
+              (deal! state)
+              (recur))
+      "d" (do (discard! state (select-cards "discard"))
+              (deal! state)
+              (recur))
+      "t" (do (toggle-menu!)
+              (recur))
+      (do (println "Invalid command")
+          (recur)))))
 
 (comment
-  (create-initial-state)
-
-  ;;ToDo Move to test of deal!
-  (init-state! (create-deck) ["P1" "P2"] [])
-  (init-state! (create-deck) [] [])
-  (print @state)
-  (deal! state)
-  (print @state)
-  (play)
-  (shuffle-deck! state)
-
-  ;;Discard lab
-  (map-indexed vector (:hand @state))
-  (filter odd? [0 1 2 3 4 5 6 7])
-  (remove odd? [0 1 2 3 4 5 6 7])
-
-  ;;Remove
-  (remove (fn [[k v]]
-            (some #(= k %) [1 3 5]))
-          (map-indexed vector (:hand @state)))
-
-  (reduce (fn [a v]
-            (conj a (first v)))
-          []
-          [[0 10] [1 11] [2 12]]
-          )
-
-  (discard! state [3 4 5])
-  (swap! state assoc :deck (s/difference (set (:deck @state)) (set (:hand @state))))
+  (-main)
   )
 
 
