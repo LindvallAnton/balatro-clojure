@@ -1,36 +1,16 @@
 (ns main
-  (:require [clojure.set :as s])
-  ;;  (:require [java-time.api :as t])
   (:require [clojure.string :as str])
   (:require [ysera.test :refer [is= is]])
+  (:require [database :refer [state create-initial-state!]])
   )
 
-(defn create-deck []
-  (into [] (for [s ['C 'D 'H 'S]
-                 n ['A 2 3 4 5 6 7 8 9 10 'J 'Q 'K]]
-             (str s n))))
 
 (defonce hand-size 8)
-
-(def state (atom {}))
-
-(defn init-state! [deck hand choices]
-  (swap! state assoc :deck deck)
-  (swap! state assoc :hand hand)
-  (swap! state assoc :choices choices)
-  (swap! state assoc :show_menu true)
-  )
 
 (defn important []
   (println "Älskar dig Pappa")
   )
 
-(defn create-initial-state! []
-  (init-state! (shuffle (create-deck)) [] [])
-  )
-
-(defn shuffle-deck! [state]
-  (swap! state assoc :deck (shuffle (:deck @state))))
 
 (defn toggle-menu! []
   (swap! state assoc :show_menu (if (:show_menu @state)
@@ -38,6 +18,7 @@
                                   true)))
 
 (declare discard!)
+(declare get-cards-as-strings)
 (defn deal! [state]
   (let [missing (- hand-size (count (:hand @state)))]
     (swap! state assoc :hand (into [] (sort (concat (:hand @state) (take missing (:deck @state))))))
@@ -52,7 +33,7 @@
                                     (conj a (second v)))
                                   [])
                           )]
-    (println "You played: " chosen-cards)
+    (println "You played: " (get-cards-as-strings chosen-cards))
     ;;ToDo count score
     (discard! state cards-to-play)))
 
@@ -84,30 +65,55 @@
 (defn discard! [state cards-to-discard]
   (swap! state assoc :hand (discard (:hand @state) cards-to-discard)))
 
+(defn get-suit-number [card]
+  (int (Math/floor (/ card 100))))
+
+(defn get-card-value [card]
+  (- card (* 100 (get-suit-number card))))
+(defn get-cards-as-strings [cards]
+  (->> cards
+       (reduce (fn [a v]
+                 (conj a (str (case (get-suit-number v)
+                                1 "S"
+                                2 "D"
+                                3 "C"
+                                4 "H"
+                                )
+                              (case (get-card-value v)
+                                1 "A"
+                                11 "J"
+                                12 "Q"
+                                13 "K"
+                                (get-card-value v)
+                                ))))
+               [])))
+
+
 (defn -main [& args]
   (println "Let's play! \u2660")
   (create-initial-state!)
   (deal! state)
-  (loop []
-    (println "Hand:" (:hand @state))
+  (loop [count 1]
+    (println "Score" (:score @state))
+    (println "Round" count (get-cards-as-strings (:hand @state)))
     (if (:show_menu @state)
       (println "q - quit\np - play\nd - discard\nt - toggle menu"))
     (case (read-line)
       "q" nil
       "p" (do (play! state (select-cards "play"))
               (deal! state)
-              (recur))
+              (recur (inc count)))
       "d" (do (discard! state (select-cards "discard"))
               (deal! state)
-              (recur))
+              (recur count))
       "t" (do (toggle-menu!)
-              (recur))
+              (recur count))
       (do (println "Invalid command")
-          (recur)))))
+          (recur count)))))
 
-(comment
-  (-main)
-  )
+  (comment
+    (-main)
+    )
 
 
 
