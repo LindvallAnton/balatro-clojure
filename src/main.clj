@@ -1,7 +1,7 @@
 (ns main
   (:require [clojure.string :as str])
   (:require [ysera.test :refer [is= is]])
-  (:require [database :refer [state create-initial-state!]])
+  (:require [database :refer [state create-initial-state! get-cards-as-strings get-suit-number get-card-value]])
   )
 
 
@@ -12,13 +12,32 @@
   )
 
 
-(defn toggle-menu! []
+(defn toggle-menu! [state]
   (swap! state assoc :show_menu (if (:show_menu @state)
                                   false
                                   true)))
 
 (declare discard!)
-(declare get-cards-as-strings)
+(defn add-to-score!
+  ;Adds value to score
+  [state value]
+  (swap! state assoc :score (+ value (:score @state))))
+
+(defn get-score
+  ;calculates the score of a play. See balatro-scorecard.jpeg
+  {:test (fn []
+           (is= (get-score [101 201 310 411 412]) 10)
+           (is= (get-score [101 201 302 402 412]) 20)
+           )}
+  [cards-played]
+  ;ToDo
+  ; Check if hand matches the highest ranking hand criteria first, ex royal flush, and progress to lower ranks
+  ; Implement functions for each hand that return the score or 0 if conditions are not met
+  ; Start with something easy like pair, three of a kind and flush using built-in function frequencies
+  10
+  )
+
+
 (defn deal! [state]
   (let [missing (- hand-size (count (:hand @state)))]
     (swap! state assoc :hand (into [] (sort (concat (:hand @state) (take missing (:deck @state))))))
@@ -31,14 +50,14 @@
                                     (some #(= (+ k 1) %) cards-to-play)))
                           (reduce (fn [a v]
                                     (conj a (second v)))
-                                  [])
-                          )]
+                                  []))]
     (println "You played: " (get-cards-as-strings chosen-cards))
-    ;;ToDo count score
+    (add-to-score! state (get-score chosen-cards))
     (discard! state cards-to-play)))
 
-(defn select-cards [action]
+(defn select-cards
   ;Returns a vector with the cards the user wants to do "action" with
+  [action]
   (print "Cards to " action ": ")
   (flush)
   (reduce (fn [a v]
@@ -65,29 +84,6 @@
 (defn discard! [state cards-to-discard]
   (swap! state assoc :hand (discard (:hand @state) cards-to-discard)))
 
-(defn get-suit-number [card]
-  (int (Math/floor (/ card 100))))
-
-(defn get-card-value [card]
-  (- card (* 100 (get-suit-number card))))
-(defn get-cards-as-strings [cards]
-  (->> cards
-       (reduce (fn [a v]
-                 (conj a (str (case (get-suit-number v)
-                                1 "S"
-                                2 "D"
-                                3 "C"
-                                4 "H"
-                                )
-                              (case (get-card-value v)
-                                1 "A"
-                                11 "J"
-                                12 "Q"
-                                13 "K"
-                                (get-card-value v)
-                                ))))
-               [])))
-
 
 (defn -main [& args]
   (println "Let's play! \u2660")
@@ -106,14 +102,14 @@
       "d" (do (discard! state (select-cards "discard"))
               (deal! state)
               (recur count))
-      "t" (do (toggle-menu!)
+      "t" (do (toggle-menu! state)
               (recur count))
       (do (println "Invalid command")
           (recur count)))))
 
-  (comment
-    (-main)
-    )
+(comment
+  (-main)
+  )
 
 
 

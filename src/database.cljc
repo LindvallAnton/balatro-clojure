@@ -1,4 +1,5 @@
-(ns database)
+(ns database
+  (:require [ysera.test :refer [is= is]]))
 (def state (atom {}))
 
 (defn create-deck []
@@ -16,3 +17,45 @@
 (defn create-initial-state! []
   (init-state! (shuffle (create-deck)) [] [])
   )
+
+(defn get-suit-number
+  ;Convenience function that given a card number returns the suit number
+  {:test (fn []
+           (is= (get-suit-number 101) 1)
+           (is= (get-suit-number 213) 2))}
+  [card]
+  (quot card 100))
+
+(defn get-card-value
+  ;Convenience function that given a card number returns the card value
+  {:test (fn []
+           (is= (get-card-value 107) 7)
+           (is= (get-card-value 213) 13))}
+  [card]
+  (- card (* 100 (get-suit-number card))))
+
+(quot 313 100)
+
+(defn get-cards-as-strings
+  ;Transforms numeric representation of cards to human-readable text
+  {:test (fn []
+           (is= (get-cards-as-strings [111 212 313 401]) ["SJ" "DQ" "CK" "HA"])
+           )}
+  [cards]
+  (->> cards
+       (reduce (fn [a v]
+                 (conj a (str (case (get-suit-number v)
+                                1 "S"
+                                2 "D"
+                                3 "C"
+                                4 "H"
+                                )
+                              (case (get-card-value v)
+                                1 "A" ;ToDo Consider letting Ace have value 14 to reflect its value
+                                11 "J"
+                                12 "Q"
+                                13 "K"
+                                (get-card-value v)
+                                ))))
+               [])))
+
