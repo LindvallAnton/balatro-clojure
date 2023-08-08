@@ -34,8 +34,6 @@
   [card]
   (- card (* 100 (get-suit-number card))))
 
-(quot 313 100)
-
 (defn get-cards-as-strings
   ;Transforms numeric representation of cards to human-readable text
   {:test (fn []
@@ -51,10 +49,10 @@
                                 4 "H"
                                 )
                               (case (get-card-value v)
-                                1 "A" ;ToDo Consider letting Ace have value 14 to reflect its value
                                 11 "J"
                                 12 "Q"
                                 13 "K"
+                                14 "A"
                                 (get-card-value v)
                                 ))))
                [])))
