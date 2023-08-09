@@ -1,16 +1,24 @@
 (ns main
   (:require [clojure.string :as str])
-  (:require [ysera.test :refer [is= is]])
+  (:require [ysera.test :refer [is=]])
   (:require [database :refer [state create-initial-state! get-cards-as-strings get-suit-number get-card-value]])
   )
 
 
 (defonce hand-size 8)
 
-(defn important []
-  (println "Älskar dig Pappa")
-  )
-
+(defn important
+  {:test (fn []
+           (is= (important "Anton") "Älskar dig Anton ❤")
+           (is= (important "Pappa") "Älskar dig Pappa ❤")
+           )}
+  [name]
+  (str
+    (->> [196 108 115 107 97 114 32 100 105 103 32]
+         (reduce (fn [ack val]
+                   (str ack (char val)))
+                 ""))
+    name (char 32) \u2764))
 
 (defn toggle-menu! [state]
   (swap! state assoc :show_menu (if (:show_menu @state)
@@ -112,14 +120,14 @@
   ;;returns true if all cards in hand are in a sequence
   {:test (fn []
            (is= (flush? [313 308 303 304 311]) true)
-           (is= (flush? [313 308 303 304 211]) false)    ;;straights cannot wrap around the top
+           (is= (flush? [313 308 303 304 211]) false)       ;;straights cannot wrap around the top
            )}
   [cards]
   (let [suits (->> cards
-                    (reduce (fn [a v]
-                              (conj a (get-suit-number v)))
-                            [])
-                    )]
+                   (reduce (fn [a v]
+                             (conj a (get-suit-number v)))
+                           [])
+                   )]
     (= 1 (count (set suits)))))
 
 (defn straight-flush?
@@ -144,7 +152,7 @@
                               (conj a (get-card-value v)))
                             [])
                     )]
-  (and (straight? cards) (flush? cards)) (= 14 (apply max values))))
+    (and (straight? cards) (flush? cards)) (= 14 (apply max values))))
 
 (defn full-house?
   ;;returns true if all cards in hand are in a sequence and in the same suit
@@ -244,6 +252,7 @@
           (recur count)))))
 
 (comment
+  (important "Anton")
   (-main)
   )
 
