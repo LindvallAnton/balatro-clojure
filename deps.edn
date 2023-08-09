@@ -1,4 +1,5 @@
 {:deps
  {
   ysera/ysera {:mvn/version "2.0.2"}
+  org.clojure/math.combinatorics {:mvn/version "0.1.6"}
   }}
