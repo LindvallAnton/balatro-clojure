@@ -72,12 +72,12 @@
   ;returns the cards from the hand that corresponds to the given indexes
   ;typically used in conjunction with get-card-ixs-from-user
   {:test (fn []
-           (is= (get-cards-from-ixs ["A" "B" "C"] [1 3]) ["B"])
-           (is= (get-cards-from-ixs ["A" "B" "C"] [2]) ["A" "C"]))}
+           (is= (get-cards-from-ixs ["A" "B" "C"] [1 3]) ["A" "C"])
+           (is= (get-cards-from-ixs ["A" "B" "C"] [2]) ["B"]))}
   [hand ixs]
   (->> hand
        (map-indexed vector)
-       (remove (fn [[k _]]
+       (filter (fn [[k _]]
                  (some #(= (+ k 1) %) ixs)))
        (reduce (fn [a v]
                  (conj a (second v)))
@@ -91,6 +91,7 @@
            (is= (discard [101 102 103] []) [101 102 103])
            (is= (discard [] [101 102 103]) []))}
   [hand cards-to-discard]
+  (println "cards-to-discard" cards-to-discard)
   (->> hand
        (remove (fn [v]
                  (some #(= v %) cards-to-discard)))
@@ -130,7 +131,7 @@
     (println "|------" "Round" round-count
              "---------" "Score" (:score @state)
              "---------" "Cards left" (count (:deck @state))
-             "----|")
+             "--------|")
     (print-hand (:hand @state))
     (print "Enter command ")
     (flush)
