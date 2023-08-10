@@ -3,7 +3,7 @@
   (:require [clojure.pprint :refer [pprint]])
   (:require [ysera.test :refer [is=]])
   (:require [clojure.math.combinatorics :as combo])
-  (:require [database :refer [state create-initial-state! get-cards-as-strings]])
+  (:require [database :refer [state create-initial-state! new-deck! get-cards-as-strings]])
   (:require [scoring :refer [get-score scores]])
   )
 
@@ -34,10 +34,22 @@
   (swap! state assoc :score (+ value (:score @state))))
 
 
-(defn deal! [state]
-  (let [missing (- hand-size (count (:hand @state)))]
-    (swap! state assoc :hand (into [] (sort (concat (:hand @state) (take missing (:deck @state))))))
-    (swap! state assoc :deck (subvec (:deck @state) missing))))
+(defn deal!
+  ;deals cards to the player so the player have hand-size cards
+  ;if the deck does not have enough cards it is refilled
+  [state]
+  (let [missing (- hand-size (count (:hand @state)))
+        enough? (<= missing (count (:deck @state)))]
+    (println "deal! missing" missing "enough?" enough?)
+    (if (not enough?)
+      (do
+        (swap! state assoc :hand (into [] (sort (concat (:hand @state) (:deck @state)))))
+        (new-deck!)
+        (deal! state))
+      (do
+        (swap! state assoc :hand (into [] (sort (concat (:hand @state) (take missing (:deck @state))))))
+        (swap! state assoc :deck (subvec (:deck @state) missing)))
+      )))
 
 (defn play-indices! [state card-ixs]
   (let [chosen-cards (->> (:hand @state)

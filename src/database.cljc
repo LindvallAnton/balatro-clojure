@@ -18,6 +18,12 @@
   (init-state! (shuffle (create-deck)) [] [])
   )
 
+(defn new-deck!
+  ;puts a new deck in state discarding any remaining cards in the old deck
+  []
+  (swap! state assoc :deck (shuffle (create-deck)))
+  )
+
 (defn get-suit-number
   ;Convenience function that given a card number returns the suit number
   {:test (fn []
