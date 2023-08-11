@@ -40,7 +40,7 @@
   [state]
   (let [missing (- hand-size (count (:hand @state)))
         enough? (<= missing (count (:deck @state)))]
-    (println "deal! missing" missing "enough?" enough?)
+    ;(println "deal! missing" missing "enough?" enough?)
     (if (not enough?)
       (do
         (swap! state assoc :hand (into [] (sort (concat (:hand @state) (:deck @state)))))
@@ -103,7 +103,7 @@
            (is= (discard [101 102 103] []) [101 102 103])
            (is= (discard [] [101 102 103]) []))}
   [hand cards-to-discard]
-  (println "cards-to-discard" cards-to-discard)
+  ;(println "cards-to-discard" cards-to-discard)
   (->> hand
        (remove (fn [v]
                  (some #(= v %) cards-to-discard)))
