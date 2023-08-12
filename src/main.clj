@@ -40,7 +40,6 @@
   [state]
   (let [missing (- hand-size (count (:hand @state)))
         enough? (<= missing (count (:deck @state)))]
-    ;(println "deal! missing" missing "enough?" enough?)
     (if (not enough?)
       (do
         (swap! state assoc :hand (into [] (sort (concat (:hand @state) (:deck @state)))))
@@ -69,13 +68,14 @@
   (discard! state cards))
 
 (defn get-card-ixs-from-user
-  ;Returns a vector with the cards the user wants to do "action" with
+  ;Returns a vector with one or more card that the user wants to do "action" with
   [action]
   (loop [input []]
-    (if (= 5 (count (set input)))                           ;;input must be five distinct cards
+    (if (< 0 (count input))                           ;;input must be at least one card
       input
       (do
-        (println "Enter five cards (ex. 1 3 5 6 8)")
+        (print "Enter the cards you want to" action "")
+        (flush)
         (recur (reduce (fn [a v]
                          (conj a (Integer/parseInt v)))
                        []
@@ -103,7 +103,6 @@
            (is= (discard [101 102 103] []) [101 102 103])
            (is= (discard [] [101 102 103]) []))}
   [hand cards-to-discard]
-  ;(println "cards-to-discard" cards-to-discard)
   (->> hand
        (remove (fn [v]
                  (some #(= v %) cards-to-discard)))
@@ -122,7 +121,8 @@
     ))
 
 (defn auto-play
-  ;Finds the optimal play given a hand and the current scoring table
+  ;Plays (one of) the five card combinations that scores the highest, potentially zero points, in a given hand
+  ;Assumes that the hand has at least five cards
   [hand]
   (->> (combo/combinations (set hand) 5)
        (reduce (fn [ack val]
