@@ -18,6 +18,7 @@
   ;;returns true if cards have exactly one pair
   {:test (fn []
            (is= (pair? [101 201 311 312 313]) true)
+           (is= (pair? [111 211]) true)
            (is= (pair? [101 201 102 202 405]) false)        ;;test case is not pair, it is two-pair
            )}
   [cards]
@@ -87,6 +88,7 @@
   ;;returns true if all cards in hand are in a consecutive sequence
   {:test (fn []
            (is= (straight? [101 202 303 404 105]) true)
+           (is= (straight? [101 202 303 404]) false);;has to be five consecutive cards
            (is= (straight? [113 101 102 103 104]) false)    ;;straights cannot wrap around the top
            (is= (straight? [305 204 406 103 207]) true)
            )}
@@ -100,9 +102,10 @@
          (= 5 (count (set values))))
     ))
 (defn flush?
-  ;;returns true if all cards in hand are in the same suit
+  ;;returns true if five cards are in the same suit
   {:test (fn []
            (is= (flush? [313 308 303 304 311]) true)
+           (is= (flush? [313 308 303 304]) false) ;;has to be five cards
            (is= (flush? [313 308 303 304 211]) false)       ;;straights cannot wrap around the top
            )}
   [cards]
@@ -111,7 +114,7 @@
                              (conj a (get-suit-number v)))
                            [])
                    )]
-    (= 1 (count (set suits)))))
+    (and (= 1 (count (set suits))) (= 5 (count suits)))))
 
 (defn straight-flush?
   ;;returns true if all cards in hand are in a sequence and in the same suit
@@ -123,10 +126,11 @@
   [cards]
   (and (straight? cards) (flush? cards)))
 (defn royal-flush?
-  ;;returns true if all cards in hand are in a sequence and in the same suit and
+  ;;returns true if five cards are in a sequence and in the same suit and
   {:test (fn []
            (is= (royal-flush? [405 408 407 409 406]) false)
            (is= (royal-flush? [410 411 412 413 414]) true)
+           (is= (royal-flush? [411 412 413 414]) false) ;;has to be five cards
            (is= (royal-flush? [311 310 312 314 313]) true)
            (is= (royal-flush? [311 310 312 314 313]) true)
            (is= (royal-flush? [105 106 112 205 201]) false)
@@ -140,10 +144,12 @@
     (and (straight? cards) (flush? cards) (= 14 (apply max values)))))
 
 (defn full-house?
-  ;;returns true if all cards in hand are in a sequence and in the same suit
+  ;;returns true if cards
   {:test (fn []
            (is= (full-house? [101 201 301 404 304]) true)
-           (is= (full-house? [101 201 303 404 304]) false))}
+           (is= (full-house? [101 201 303 404 304]) false)
+           (is= (full-house? [101 201 301 404 305]) false) ;;the cards counted as three of a kind must not be mistaken to be the pair
+           )}
   [cards]
   (and (pair? cards) (three-of-a-kind? cards)))
 
