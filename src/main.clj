@@ -68,11 +68,12 @@
   (discard! state cards))
 
 (defn get-card-ixs-from-user
-  ;Returns a vector with one or more card that the user wants to do "action" with
+  ;Returns a vector with 1-5 cards that the user wants to do "action" with
+  ;Duplicates are assumed to be accidental and are quietly removed before return.
   [action]
   (loop [input []]
-    (if (< 0 (count input))                           ;;input must be at least one card
-      input
+    (if (and (< 0 (count input)) (> 6 (count input)))                        ;;input must be at least one card
+      (into [] (set input)) ;;remove duplicates
       (do
         (print "Enter the cards you want to" action "")
         (flush)
