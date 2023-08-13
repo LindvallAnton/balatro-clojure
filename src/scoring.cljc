@@ -1,18 +1,18 @@
 (ns scoring
   (:require [ysera.test :refer [is=]])
-  (:require [database :refer [get-suit-number get-card-value get-card-values]])
+  (:require [database :refer [get-suit-number get-card-rank get-card-ranks]])
   )
 
-(def scores {:royal-flush     {:base-score 200 :multiplier 10}
-             :straight-flush  {:base-score 100 :multiplier 8}
-             :four-of-a-kind  {:base-score 60 :multiplier 5}
-             :full-house      {:base-score 40 :multiplier 4}
-             :flush           {:base-score 40 :multiplier 3}
-             :straight        {:base-score 30 :multiplier 3}
-             :three-of-a-kind {:base-score 20 :multiplier 3}
-             :two-pair        {:base-score 20 :multiplier 2}
-             :pair            {:base-score 10 :multiplier 2}
-             :high-card       {:base-score 5 :multiplier 1}
+(def scores {:royal-flush     {:name "Royal Flush" :base-score 200 :multiplier 10}
+             :straight-flush  {:name "Straight Flush" :base-score 100 :multiplier 8}
+             :four-of-a-kind  {:name "Four of a Kind" :base-score 60 :multiplier 5}
+             :full-house      {:name "Full house" :base-score 40 :multiplier 4}
+             :flush           {:name "Flush" :base-score 40 :multiplier 3}
+             :straight        {:name "Straight" :base-score 30 :multiplier 3}
+             :three-of-a-kind {:name "Three of a Kind" :base-score 20 :multiplier 3}
+             :two-pair        {:name "Two pair" :base-score 20 :multiplier 2}
+             :pair            {:name "Pair" :base-score 10 :multiplier 2}
+             :high-card       {:name "High Card" :base-score 5 :multiplier 1}
              })
 
 ;; Source for Balatro scoring rules https://forums.somethingawful.com/showthread.php?threadid=4034530
@@ -27,7 +27,7 @@
   [cards]
   (= 1 (count
          (->> cards
-              (get-card-values)
+              (get-card-ranks)
               (frequencies)
               (vals)
               (filter #(= 2 %))
@@ -39,13 +39,13 @@
            (is= (three-of-a-kind? [101 201 203 303 405]) false)
            )}
   [cards]
-  (true?                                                   ;;to avoid returning nil instead of false if not true
-     (->> cards
-          (get-card-values)
-          (frequencies)
-          (vals)
-          (some #(= 3 %))
-          )))
+  (true?                                                    ;;to avoid returning nil instead of false if not true
+    (->> cards
+         (get-card-ranks)
+         (frequencies)
+         (vals)
+         (some #(= 3 %))
+         )))
 (defn four-of-a-kind?
   ;;returns true if cards fulfill requirement of three-of-a-kind
   {:test (fn []
@@ -53,13 +53,13 @@
            (is= (four-of-a-kind? [101 201 301 303 405]) false)
            )}
   [cards]
-  (true?                                                   ;;to avoid returning nil instead of false if not true
-     (->> cards
-          (get-card-values)
-          (frequencies)
-          (vals)
-          (some #(= 4 %))
-          )))
+  (true?                                                    ;;to avoid returning nil instead of false if not true
+    (->> cards
+         (get-card-ranks)
+         (frequencies)
+         (vals)
+         (some #(= 4 %))
+         )))
 
 (defn two-pair?
   ;;returns true if cards fulfill requirement of pair
@@ -73,7 +73,7 @@
   [cards]
   (= 2 (count
          (->> cards
-              (get-card-values)
+              (get-card-ranks)
               (frequencies)
               (vals)
               (filter #(= 2 %))
@@ -81,7 +81,6 @@
 
 (defn straight?
   ;;returns true if all cards in hand are in a consecutive sequence
-
   {:test (fn []
            (is= (straight? [114 202 303 404 105]) true)     ;;Ace can be used as 1 or 14
            (is= (straight? [110 211 312 413 114]) true)     ;;Ace can be used as 1 or 14
@@ -91,7 +90,7 @@
            (is= (straight? [305 206 407 108 210]) false)
            )}
   [cards]
-  (let [values (sort (get-card-values cards))]
+  (let [values (sort (get-card-ranks cards))]
     (or (= values [2 3 4 5 14])
         (and (= 4 (- (apply max values) (apply min values)))
              (= 5 (count (set values)))))))
@@ -106,8 +105,7 @@
   (let [suits (->> cards
                    (reduce (fn [a v]
                              (conj a (get-suit-number v)))
-                           [])
-                   )]
+                           []))]
     (and (= 1 (count (set suits))) (= 5 (count suits)))))
 
 (defn straight-flush?
@@ -130,7 +128,7 @@
            (is= (royal-flush? [105 106 112 205 201]) false)
            )}
   [cards]
-  (let [values (get-card-values cards)]
+  (let [values (get-card-ranks cards)]
     (and (straight? cards) (flush? cards) (= 14 (apply max values)))))
 
 (defn full-house?
@@ -143,11 +141,11 @@
   [cards]
   (and (pair? cards) (three-of-a-kind? cards)))
 
-(defn get-base-score-and-multiplier
-  ;returns the base score and multiplier for cards
+(defn get-play-classification
+  ;returns what type of play cards represents, e.g. pair, straight or full house
   {:test (fn []
-           (is= (get-base-score-and-multiplier [410 411 412 413 414]) :royal-flush)
-           (is= (get-base-score-and-multiplier [101 201 310 411 412]) :pair))}
+           (is= (get-play-classification [410 411 412 413 414]) :royal-flush)
+           (is= (get-play-classification [101 201 310 411 412]) :pair))}
   [cards]
   (cond
     (royal-flush? cards) :royal-flush
@@ -161,22 +159,22 @@
     (pair? cards) :pair
     :else :high-card))
 
-(defn get-score-for-card
-  ;returns the score for a card value
+(defn get-score-for-rank
+  ;returns the score for a card rank
   {:test (fn []
-           (is= (get-score-for-card 4) 4)
-           (is= (get-score-for-card 12) 10))}
-  [card-value]
-  (case card-value
-    (2 3 4 5 6 7 8 9) card-value
+           (is= (get-score-for-rank 4) 4)
+           (is= (get-score-for-rank 12) 10))}
+  [card-rank]
+  (case card-rank
+    (2 3 4 5 6 7 8 9) card-rank
     (10 11 12 13 14) 10))
 
-(defn get-score-for-cards
+(defn get-score-for-ranks
   ;returns the score for a collection of card values
-  [card-values]
-  (->> card-values
+  [card-ranks]
+  (->> card-ranks
        (reduce (fn [ack val]
-                 (+ ack (get-score-for-card val)))
+                 (+ ack (get-score-for-rank val)))
                0)))
 (defn calculate-value-of-cards
   ;return the card values for the cards contributing to the hand,
@@ -188,43 +186,43 @@
            (is= (calculate-value-of-cards :three-of-a-kind [107 207 307 308]) (+ 7 7 7))
            (is= (calculate-value-of-cards :four-of-a-kind [107 207 307 407 109]) (+ 7 7 7 7))
            (is= (calculate-value-of-cards :flush [107 108 103 102 114]) (+ 7 8 3 2 10)))}
-  [hand-key cards]
-  (case hand-key
+  [play-classification cards]
+  (case play-classification
     :high-card (->> cards
-                    (get-card-values)
+                    (get-card-ranks)
                     (apply max)
-                    (get-score-for-card))
+                    (get-score-for-rank))
     (:pair :two-pair) (->> cards
-                           (get-card-values)
+                           (get-card-ranks)
                            (frequencies)
                            (filter #(= 2 (val %)))
                            (reduce (fn [ack val]
                                      (conj ack (first val)))
                                    [])
-                           (get-score-for-cards)
+                           (get-score-for-ranks)
                            (* 2))
     :three-of-a-kind (->> cards
-                          (get-card-values)
+                          (get-card-ranks)
                           (frequencies)
                           (filter #(= 3 (val %)))
                           (flatten)
                           (first)
-                          (get-score-for-card)
+                          (get-score-for-rank)
                           (* 3))
     :four-of-a-kind (->> cards
-                         (get-card-values)
+                         (get-card-ranks)
                          (frequencies)
                          (filter #(= 4 (val %)))
                          (flatten)
                          (first)
-                         (get-score-for-card)
+                         (get-score-for-rank)
                          (* 4))
     (:straight :flush
       :straight-flush
       :royal-flush
       :full-house) (->> cards
-                        (get-card-values)
-                        (get-score-for-cards))))
+                        (get-card-ranks)
+                        (get-score-for-ranks))))
 
 (comment
 
@@ -234,7 +232,7 @@
        (reduce (fn [ack val]
                  (conj ack (first val)))
                [])
-       (get-score-for-cards)
+       (get-score-for-ranks)
        (* 2))
   )
 (defn get-score
@@ -247,9 +245,9 @@
            (is= (get-score [114 214 314 106 206]) (* 4 (+ 40 10 10 10 6 6))) ;full-house
            )}
   [cards]
-  (let [hand-key (get-base-score-and-multiplier cards)
-        base-score (get-in scores [hand-key :base-score])
-        multiplier (get-in scores [hand-key :multiplier])]
-    ;    (println hand-key base-score "x" multiplier)
-    (* multiplier (+ base-score (calculate-value-of-cards hand-key cards)))
+  (let [play-classification (get-play-classification cards)
+        base-score (get-in scores [play-classification :base-score])
+        multiplier (get-in scores [play-classification :multiplier])]
+    ;    (println play-classification base-score "x" multiplier)
+    (* multiplier (+ base-score (calculate-value-of-cards play-classification cards)))
     ))

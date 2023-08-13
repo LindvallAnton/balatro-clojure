@@ -32,22 +32,22 @@
   [card]
   (quot card 100))
 
-(defn get-card-value
-  ;Convenience function that given a card number returns the card value
+(defn get-card-rank
+  ;Convenience function that given a card number returns the card rank
   {:test (fn []
-           (is= (get-card-value 107) 7)
-           (is= (get-card-value 213) 13))}
+           (is= (get-card-rank 107) 7)
+           (is= (get-card-rank 213) 13))}
   [card]
   (- card (* 100 (get-suit-number card))))
 
-(defn get-card-values
+(defn get-card-ranks
   ;Convenience function that given a collection of card values returns the cards values
   {:test (fn []
-           (is= (get-card-values [107 208 309]) [7 8 9])
-           (is= (get-card-values [213]) [13]))}
+           (is= (get-card-ranks [107 208 309]) [7 8 9])
+           (is= (get-card-ranks [213]) [13]))}
   [cards]
   (->> cards (reduce (fn [ack val]
-                       (conj ack (get-card-value val)))
+                       (conj ack (get-card-rank val)))
                      [])))
 
 (defn get-cards-as-strings
@@ -64,12 +64,12 @@
                                 3 "C"
                                 4 "H"
                                 )
-                              (case (get-card-value v)
+                              (case (get-card-rank v)
                                 11 "J"
                                 12 "Q"
                                 13 "K"
                                 14 "A"
-                                (get-card-value v)
+                                (get-card-rank v)
                                 ))))
                [])))
 

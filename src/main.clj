@@ -1,6 +1,5 @@
 (ns main
   (:require [clojure.string :as str])
-  (:require [clojure.pprint :refer [pprint]])
   (:require [ysera.test :refer [is=]])
   (:require [clojure.math.combinatorics :as combo])
   (:require [database :refer [state create-initial-state! new-deck! get-cards-as-strings]])
@@ -58,12 +57,12 @@
                           (reduce (fn [a v]
                                     (conj a (second v)))
                                   []))]
-    (println "You played: " (get-cards-as-strings chosen-cards) "for" (get-score chosen-cards) "pts")
+    (println "You played: " (get-cards-as-strings chosen-cards) "for" (get-score chosen-cards) "pts\n")
     (add-to-score! state (get-score chosen-cards))
     (discard! state chosen-cards)))
 
 (defn play-cards! [state cards]
-  (println "You played: " (get-cards-as-strings cards) "for" (get-score cards) "pts")
+  (println "You played: " (get-cards-as-strings cards) "for" (get-score cards) "pts\n")
   (add-to-score! state (get-score cards))
   (discard! state cards))
 
@@ -72,8 +71,8 @@
   ;Duplicates are assumed to be accidental and are quietly removed before return.
   [action]
   (loop [input []]
-    (if (and (< 0 (count input)) (> 6 (count input)))                        ;;input must be at least one card
-      (into [] (set input)) ;;remove duplicates
+    (if (and (< 0 (count input)) (> 6 (count input)))       ;;input must be at least one card
+      (into [] (set input))                                 ;;remove duplicates
       (do
         (print "Enter the cards you want to" action "")
         (flush)
@@ -118,8 +117,7 @@
   (let [hand-as-strings (get-cards-as-strings hand)
         indices (range 1 (+ 1 (count hand-as-strings)))]
     (println (apply str (interleave (repeat "\t") hand-as-strings)))
-    (println (apply str (interleave (repeat "\t") indices)))
-    ))
+    (println (apply str (interleave (repeat "\t") indices)))))
 
 (defn auto-play
   ;Plays (one of) the five card combinations that scores the highest, potentially zero points, in a given hand
@@ -133,20 +131,47 @@
        (last)
        (val)))
 
+(defn pad-string-right [input-string desired-length]
+  (str input-string (apply str (repeat (- desired-length (count input-string)) " "))))
+(defn pad-string-left [input-string desired-length]
+  (str (apply str (repeat (- desired-length (count input-string)) " ")) input-string))
+
+(defn print-scorecard []
+  (let [width 34]
+    (println (apply str (repeat width "-")))
+    (println (pad-string-left "Base" 22) (pad-string-left "Mult" 10))
+    (println (apply str (repeat width "-")))
+    (let [score-card (->> scores
+                          (reduce (fn [ack [_ v]]
+                                    (let [base-score (:base-score v)
+                                          multiplier (:multiplier v)
+                                          hand-type (:name v)
+                                          sort-key (* base-score multiplier)]
+                                      (conj ack (vector sort-key hand-type base-score multiplier)))) [])
+                          (sort-by first >))
+          max-name-length (reduce (fn [ack [_ val]]
+                                    (max ack (count (:name val)))) 0 scores)]
+      (doseq [[_ name base-score multiplier] score-card]
+        (println (pad-string-right name max-name-length)
+                 (pad-string-left (str base-score) 6)
+                 "   x"
+                 (pad-string-left (str multiplier) 5))))
+    (println (apply str (repeat width "-")))
+    (println)))
+
 (defn -main [& args]
   (println (repeat 3 "\u2660") " Let's play Balatro!" (repeat 3 "\u2660"))
   (create-initial-state!)
   (deal! state)
   (loop [round-count 1]
     (if (:show_menu @state)
-      (println "Menu\n\tq - quit\n\tp - play\n\td - discard\n\ts - score chart\n\tt - toggle menu"))
-
+      (println "Menu\n\tq - quit\n\tp - play\n\td - discard\n\ts - score chart\n\tt - toggle menu\n"))
     (println "|------" "Round" round-count
              "---------" "Score" (:score @state)
              "---------" "Cards left" (count (:deck @state))
-             "--------|")
+             "---------|")
     (print-hand (:hand @state))
-    (print "Enter command ")
+    (print "\nEnter command ")
     (flush)
     (case (read-line)
       "q" nil
@@ -159,18 +184,17 @@
       "d" (do (discard! state (get-cards-from-ixs (:hand @state) (get-card-ixs-from-user "discard")))
               (deal! state)
               (recur round-count))
-      "s" (do (pprint scores)
+      "s" (do (print-scorecard)
               (recur round-count))
       "t" (do (toggle-menu! state)
               (recur round-count))
       (do (println "Invalid command")
           (recur round-count))))
-  (println "Sayonara. You scored " (:score @state)))
+  (printf "Sayonara. You scored %d " (:score @state)))
 
 (comment
   (important "Anton")
   (-main)
   )
-
 
 
