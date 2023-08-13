@@ -39,8 +39,8 @@
   ;if the deck does not have enough cards it is refilled
   [state]
   (let [missing (- hand-size (count (:hand @state)))
-        enough? (<= missing (count (:deck @state)))]
-    (if (not enough?)
+        enough-cards? (<= missing (count (:deck @state)))]
+    (if (not enough-cards?)
       (do
         (swap! state assoc :hand (into [] (sort (concat (:hand @state) (:deck @state)))))
         (new-deck!)
@@ -125,7 +125,7 @@
   ;Plays (one of) the five card combinations that scores the highest, potentially zero points, in a given hand
   ;Assumes that the hand has at least five cards
   [hand]
-  (->> (combo/combinations (set hand) 5)
+  (->> (combo/combinations hand 5)
        (reduce (fn [ack val]
                  (into ack {(get-score val) val})
                  )

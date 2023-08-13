@@ -40,10 +40,20 @@
   [card]
   (- card (* 100 (get-suit-number card))))
 
+(defn get-card-values
+  ;Convenience function that given a collection of card values returns the cards values
+  {:test (fn []
+           (is= (get-card-values [107 208 309]) [7 8 9])
+           (is= (get-card-values [213]) [13]))}
+  [cards]
+  (->> cards (reduce (fn [ack val]
+                       (conj ack (get-card-value val)))
+                     [])))
+
 (defn get-cards-as-strings
   ;Transforms numeric representation of cards to human-readable text
   {:test (fn []
-           (is= (get-cards-as-strings [111 212 313 401]) ["SJ" "DQ" "CK" "HA"])
+           (is= (get-cards-as-strings [111 212 313 414]) ["SJ" "DQ" "CK" "HA"])
            )}
   [cards]
   (->> cards
