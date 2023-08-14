@@ -183,13 +183,13 @@
                     (do
                       (decrease-hands!)
                       (play-indices! state (get-card-ixs-from-user "play"))
-                      (deal! state)
-                      (if (blind-defeated?)
-                        (println "You have won!")))
-                    (println "No hands left. You lost :-("))
+                      (deal! state)))
                   (recur (inc round-count)))
-          "." (do (play-cards! state (auto-play (:hand @state)))
-                  (deal! state)
+          "." (do (if (< 0 (:hands @state))
+                    (do
+                      (play-cards! state (auto-play (:hand @state)))
+                      (decrease-hands!)
+                      (deal! state)))
                   (recur (inc round-count)))
           "d" (do (if (< 0 (:discards @state))
                     (do
