@@ -7,23 +7,41 @@
                  n [2 3 4 5 6 7 8 9 10 11 12 13 14]]
              (+ s n))))
 
-(defn init-state! [deck hand choices]
+(defn init-state! [deck hand no-of-hands no-of-discards score-to-beat]
   (swap! state assoc :deck deck)
   (swap! state assoc :hand hand)
-  (swap! state assoc :choices choices)
+  (swap! state assoc :discards no-of-discards)
+  (swap! state assoc :hands no-of-hands)
+  (swap! state assoc :score 0)
+  (swap! state assoc :score-to-beat score-to-beat)
+  ;;Settings
   (swap! state assoc :show_menu true)
-  (swap! state assoc :score 0))
+  )
 
 (defn create-initial-state! []
-  (init-state! (shuffle (create-deck)) [] [])
+  (init-state! (shuffle (create-deck)) [] 5 3 600)
   )
 
 (defn new-deck!
   ;puts a new deck in state discarding any remaining cards in the old deck
   []
-  (swap! state assoc :deck (shuffle (create-deck)))
-  )
+  (swap! state assoc :deck (shuffle (create-deck))))
 
+(defn decrease-discards!
+  []
+  (assert (< 0 (:discards @state)))
+  (swap! state assoc :discards (dec (:discards @state))))
+
+(defn decrease-hands!
+  []
+  (assert (< 0 (:hands @state)))
+  (swap! state assoc :hands (dec (:hands @state))))
+
+(defn blind-defeated? []
+  (<= (:score-to-beat @state) (:score @state)))
+
+(defn hands-left? []
+  (< 0 (:hands @state)))
 (defn get-suit-number
   ;Convenience function that given a card number returns the suit number
   {:test (fn []
